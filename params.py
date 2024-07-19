@@ -18,7 +18,7 @@ BETA1 = 0.5
 BETA2 = 0.999
 ALPHA = 0.000001
 ETA0 = 0.00001
-
+SPLIT_SIZE = 0.5
 
 
 AUDIO_EXAMPLE_PATH = r'data\musicnet\train_data\1727.wav'
