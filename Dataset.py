@@ -57,7 +57,10 @@ class AudioDataset(Dataset):
         
 
         label = self.labels.loc[sample_id]
-        start = np.random.rand()*(label.seconds - SAMPLE_LENGTH)
+        n_channels = 1
+        if self.mode == 2:
+            n_channels = N_CHANNELS
+        start = np.random.rand(n_channels)*(label.seconds - SAMPLE_LENGTH)
         
         sample = self._get_data(index,start)
 
@@ -70,17 +73,19 @@ class AudioDataset(Dataset):
     def __len__(self):
         return len(self.data_paths)
     
-    def _load_sample(self,path = None ,sample=None, sr=SAMPLING_RATE,start=0,duration=SAMPLE_LENGTH) -> np.ndarray: 
+    def _load_sample(self,path = None ,sample=None, sr=SAMPLING_RATE,start=[0],duration=SAMPLE_LENGTH) -> np.ndarray: 
         
         if path != None:
-            sample, _ = librosa.load(path,sr=sr,offset=start,duration=duration)
-            sample = torch.tensor(sample)
+            sample, _ = librosa.load(path,sr=sr,offset=start[0],duration=duration)
+            sample = torch.tensor([sample])
             
         elif sample != None:
-            sample = sample[int(start*sr):int(start*sr)+sr*duration]
+            sample = torch.stack([sample[int(start[i]*sr):int(start[i]*sr)+sr*duration] for i in range(len(start))])
+            
+            
         
         if self.mode == 0:
-            return sample
+            return sample.flatten().type(torch.float32)
         
         sample = spectrogram(sample,sample_rate=sr,device=self.device)
     
@@ -88,10 +93,6 @@ class AudioDataset(Dataset):
         if self.mode == 1:
             return sample.flatten().type(torch.float32)
         
-        
-        
-        sample = sample.unsqueeze(0)
-    
 
         t = transforms.Compose([
             transforms.Resize(size=(128,312)),
