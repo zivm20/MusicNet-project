@@ -60,7 +60,7 @@ class AudioDataset(Dataset):
         n_channels = 1
         if self.mode == 2:
             n_channels = N_CHANNELS
-        start = np.random.rand(n_channels)*(label.seconds - SAMPLE_LENGTH)
+        start = np.sort(np.random.rand(n_channels)*(label.seconds - SAMPLE_LENGTH))
         
         sample = self._get_data(index,start)
 
