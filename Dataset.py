@@ -14,6 +14,7 @@ import os
 class AudioDataset(Dataset):
     def __init__(self,data_paths,labels:pd.DataFrame,mode,device='cpu',preload=False, cache_size=0):
         super().__init__()
+        self.rng = np.random.default_rng(seed=SEED)
         
         self.data_paths = data_paths
         self.cache_size = cache_size
@@ -61,8 +62,8 @@ class AudioDataset(Dataset):
         if self.mode == 2:
             n_channels = N_CHANNELS
         
-        start = np.sort(np.random.rand(n_channels)*(label.seconds - SAMPLE_LENGTH))
-        #start = np.sort(np.random.rand(n_channels)*np.array([(i+1)*(label.seconds - SAMPLE_LENGTH)/n_channels for i in range(n_channels)]))
+        start = np.sort(self.rng.random(n_channels)*(label.seconds - SAMPLE_LENGTH))
+        #start = np.sort(self.rng.random(n_channels)*np.array([(i+1)*(label.seconds - SAMPLE_LENGTH)/n_channels for i in range(n_channels)]))
 
         sample = self._get_data(index,start)
 
@@ -75,7 +76,7 @@ class AudioDataset(Dataset):
     def __len__(self):
         return len(self.data_paths)
     
-    def _load_sample(self,path = None ,sample=None, sr=SAMPLING_RATE,start=[0],duration=SAMPLE_LENGTH) -> np.ndarray: 
+    def _load_sample(self,path = None ,sample=None, sr=SAMPLING_RATE,start=[0],duration=SAMPLE_LENGTH) -> torch.Tensor: 
         
         if path != None:
             sample, _ = librosa.load(path,sr=sr,offset=start[0],duration=duration)
