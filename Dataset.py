@@ -118,53 +118,6 @@ def get_dataloader(data,labels, batchSize, shuffle=True,mode=0,device='cpu',prel
     loader = DataLoader(ds, batch_size=batchSize,shuffle=shuffle)
     return (ds, loader)
 
-    
-    
-
-
-def fft_filter(sample,tol=0.1):
-    newSample = np.fft.fft(sample)
-    mask = np.abs(newSample)/len(sample)<=tol*np.max(np.abs(newSample)/len(sample))
-    newSample[mask] = 0
-    newSample = np.fft.ifft(newSample).real
-    return newSample
-
-
-
-def spectrogram_custom(samples, sample_rate, stride_ms = 16.0, 
-                          window_ms = 32.0, max_freq = None, eps = 1e-14):
-
-    stride_size = int(0.001 * sample_rate * stride_ms)
-    window_size = int(0.001 * sample_rate * window_ms)
-
-    # Extract strided windows
-    truncate_size = (len(samples) - window_size) % stride_size
-    samples = samples[:len(samples) - truncate_size]
-    nshape = (window_size, (len(samples) - window_size) // stride_size + 1)
-    nstrides = (samples.strides[0], samples.strides[0] * stride_size)
-    windows = np.lib.stride_tricks.as_strided(samples, 
-                                          shape = nshape, strides = nstrides)
-    
-    assert np.all(windows[:, 1] == samples[stride_size:(stride_size + window_size)])
-
-    # Window weighting, squared Fast Fourier Transform (fft), scaling
-    weighting = np.hanning(window_size)[:, None]
-    
-    fft = np.fft.rfft(windows * weighting, axis=0)
-    fft = np.absolute(fft)
-    fft = fft**2
-    
-    scale = np.sum(weighting**2) * sample_rate
-    fft[1:-1, :] *= (2.0 / scale)
-    fft[(0, -1), :] /= scale
-    
-    # Prepare fft frequency list
-    freqs = float(sample_rate) / window_size * np.arange(fft.shape[0])
-    
-    # Compute spectrogram feature
-    ind = np.where(freqs <= max_freq)[0][-1] + 1
-    specgram = np.log(fft[:ind, :] + eps)
-    return specgram
 
 
 def spectrogram(sample,sample_rate, stride_ms = 16.0, 
